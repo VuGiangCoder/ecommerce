@@ -12,9 +12,6 @@ let createUser = async function (req, res) {
   // limitCreateShop: data.limitCreateShop,
   // address: data.address,
   // status: data.status,
-  req.body.email = "abcaisc@da";
-  req.body.password = "dajsdoiad";
-  req.body.position = "ojsdpadop";
   await crudService.createNewUser(req.body);
   let message = '200: {message : "Xác thực đăng ký trong email" , errCode : 0}';
   res.send(message);
