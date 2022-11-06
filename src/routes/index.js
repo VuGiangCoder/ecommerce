@@ -3,8 +3,11 @@ var router = express.Router();
 var homeController = require("../controllers/homeController");
 
 let initWebRouter = (app) => {
-  router.get("/user/regis", homeController.createUser);
+  router.post("/user/regis", homeController.createUser);
   router.get("/user/login", homeController.login);
+  router.get("/user/profile", homeController.getInfo);
+  router.get("/user/search", homeController.searchProduct);
+  router.get("/user/cart", homeController.getCart);
   app.use("/", router);
 };
 
