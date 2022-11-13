@@ -39,37 +39,15 @@ let createNewUser = async (data) => {
   }
 };
 
-let getUserById = async (id) => {
-  try {
-    return await db.User.findOne({
-      where: {
-        id: id,
-      },
-    });
-  } catch (e) {
-    return null;
-  }
-};
 let getUserByEmail = async (email) => {
   try {
     return await db.User.findOne({
       where: {
         email: email,
       },
-      attributes: {
-        exclude: ["password"],
-      },
-    });
-  } catch (e) {
-    return null;
-  }
-};
-let getUserTokenByToken = async (token) => {
-  try {
-    return await db.Usertoken.findOne({
-      where: {
-        token: token,
-      },
+      // attributes: {
+      //   exclude: ["password"],
+      // },
     });
   } catch (e) {
     return null;
@@ -77,6 +55,8 @@ let getUserTokenByToken = async (token) => {
 };
 
 let signIn = async (req) => {
+  req.body.email = "giang2010gc@gmail.com";
+  req.body.password = "abcdef";
   let user = await getUserByEmail(req.body.email);
   if (user === null) {
     return false;
@@ -131,7 +111,6 @@ module.exports = {
   signIn,
   isLogging,
   getUserByEmail,
-  getUserTokenByToken,
   findItemByName,
   findItemImage,
 };
