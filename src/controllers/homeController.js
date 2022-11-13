@@ -9,7 +9,7 @@ const { Op } = require("sequelize");
 var generator = require("generate-password");
 
 let createUser = async (req, res) => {
-  req.body.email = "giang2010gc@gmail.com";
+  req.body.email = "giang2010gc1331@gmail.com";
   req.body.password = "abcdef";
   let flag = await crudService.createNewUser(req.body);
   let user = await db.User.findOne({
@@ -198,14 +198,7 @@ let forgetPassword = async (req, res) => {
     password: password,
   });
   await user.save();
-  let userNew = await db.User.findOne({
-    where: {
-      email: email,
-    },
-    attributes: {
-      exclude: ["password"],
-    },
-  });
+
   sendMail(email, "Quên mật khẩu", "password mới: " + newPassword);
   return res.status(200).json({
     message: "Check mail để có xác nhận khôi phục mật khẩu",
@@ -255,6 +248,61 @@ let orderItem = async (req, res) => {
     console.log(error);
   }
 };
+
+let cancelOrder = async (req, res) => {
+  let token = req.params.token;
+  let data = jwt.verify(token, process.env.JWT_SECRET);
+  await db.Order.destroy({
+    where: {
+      id: req.params.orderId,
+      userId: data.id,
+    },
+    force: true,
+  });
+  return res.status(200).json({
+    message: "Huỷ đơn hàng thành công",
+    errCode: 0,
+  });
+};
+
+let changePassword = async (req, res) => {
+  let token = req.params.token;
+  let data = jwt.verify(token, process.env.JWT_SECRET);
+  let currentPassword = req.body.currentPassword;
+  let newPassword = req.body.newPassword;
+
+  let user = await db.User.findOne({
+    where: {
+      email: data.email,
+    },
+  });
+  console.log(user);
+  if (user != null) {
+    let check = await bcrypt.compare(currentPassword, user.password);
+    console.log(check);
+    if (check) {
+      let newPasswordBcrypt = await crudService.hashUSerPassword(newPassword);
+      await user.set({
+        password: newPasswordBcrypt,
+      });
+      await user.save();
+      return res.status(200).json({
+        message: "Đổi mật khẩu thành công",
+        errCode: 0,
+      });
+    } else {
+      return res.status(200).json({
+        message: "Mật khẩu hiện tại không đúng",
+        errCode: 0,
+      });
+    }
+  } else {
+    return res.status(200).json({
+      message: "Yêu cầu đăng nhập",
+      errCode: 0,
+    });
+  }
+};
 module.exports = {
   createUser,
   login,
@@ -263,4 +311,6 @@ module.exports = {
   getCart,
   forgetPassword,
   orderItem,
+  cancelOrder,
+  changePassword,
 };

@@ -10,8 +10,8 @@ let initWebRouter = (app) => {
   router.get("/user/cart/:token", homeController.getCart);
   router.get("/user/forget_password", homeController.forgetPassword);
   router.post("/user/order/:token", homeController.orderItem);
-  // router.post("//user/cancel_order", homeController.cancelOrder);
-  // router.post("/user/change_password", homeController.changePassWord);
+  router.post("/user/cancel_order/:orderId/:token", homeController.cancelOrder);
+  router.post("/user/change_password/:token", homeController.changePassword);
   app.use("/", router);
 };
 
