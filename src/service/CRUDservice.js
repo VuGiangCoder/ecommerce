@@ -56,7 +56,7 @@ let getUserByEmail = async (email) => {
 
 let signIn = async (req) => {
   req.body.email = "giang2010gc@gmail.com";
-  req.body.password = "abcdef";
+  req.body.password = "Yle4FB7OGh";
   let user = await getUserByEmail(req.body.email);
   if (user === null) {
     return false;
@@ -113,4 +113,5 @@ module.exports = {
   getUserByEmail,
   findItemByName,
   findItemImage,
+  hashUSerPassword,
 };

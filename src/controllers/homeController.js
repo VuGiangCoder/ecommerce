@@ -5,7 +5,12 @@ var cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
 const { createJWT } = require("../middleware/JWTAction");
 const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
+var generator = require("generate-password");
+
 let createUser = async (req, res) => {
+  req.body.email = "giang2010gc@gmail.com";
+  req.body.password = "abcdef";
   let flag = await crudService.createNewUser(req.body);
   let user = await db.User.findOne({
     where: {
@@ -82,8 +87,137 @@ let getInfo = async (req, res) => {
     console.log("loi server");
   }
 };
+
+let searchProduct = async (req, res) => {
+  var name = "quan ao";
+  var priceMin = 1200;
+  var priceMax = 2000;
+  var page = 2;
+  var size = 1;
+
+  let skip = (page - 1) * size;
+  var item = await db.Item.findAll({
+    where: {
+      name: name,
+      price: {
+        [Op.between]: [priceMin, priceMax],
+      },
+    },
+    limit: size,
+    offset: skip,
+  });
+  if (item == null) {
+    res.status(200).json({
+      message: "Không có săn phẩm nào",
+      errCode: 0,
+    });
+  } else {
+    return res.status(200).json({
+      message: "Danh sách sản phẩm",
+      errCode: 0,
+      payload: item,
+      page: page,
+      pageTotal: 10,
+      size: size,
+    });
+  }
+};
+
+let getCart = async (req, res) => {
+  let token = req.params.token;
+  let page = 1;
+  let size = 1;
+
+  try {
+    var data = jwt.verify(token, process.env.JWT_SECRET);
+    var email = data.email;
+    console.log(email);
+    let user = await db.User.findOne({
+      where: {
+        email: email,
+      },
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+    var userId = user.id;
+    console.log(userId);
+    let cart = await db.Cart.findAll({
+      where: {
+        userId: userId,
+      },
+    });
+    console.log(cart[0].itemId);
+    let item = await db.Item.findAll({
+      where: {
+        [Op.or]: [
+          { id: cart[0].itemId },
+          { id: cart[1].itemId },
+          { id: cart[2].itemId },
+          { id: cart[3].itemId },
+          { id: cart[4].itemId },
+          { id: cart[5].itemId },
+        ],
+      },
+      limit: size,
+      offset: (page - 1) * size,
+    });
+    if (cart == null) {
+      return res.status(200).json({
+        message: "Không có mặt hàng nào trong giở",
+        errCode: 0,
+      });
+    } else {
+      return res.status(200).json({
+        message: "Giỏ hàng người dùng",
+        errCode: 0,
+        payload: {
+          page: page,
+          size: size,
+          totalPage: 10,
+          cart: item,
+        },
+      });
+    }
+  } catch (error) {}
+};
+
+let forgetPassword = async (req, res) => {
+  let email = "giang2010gc@gmail.com";
+  let user = await db.User.findOne({
+    where: {
+      email: email,
+    },
+  });
+  let newPassword = generator.generate({
+    length: 10,
+    numbers: true,
+  });
+  let password = await crudService.hashUSerPassword(newPassword);
+  await user.set({
+    password: password,
+  });
+  await user.save();
+  let userNew = await db.User.findOne({
+    where: {
+      email: email,
+    },
+    attributes: {
+      exclude: ["password"],
+    },
+  });
+  sendMail(email, "Quên mật khẩu", newPassword);
+  return res.status(200).json({
+    message: "Check mail để có xác nhận khôi phục mật khẩu",
+    errCode: 0,
+  });
+};
+
 module.exports = {
   createUser,
   login,
   getInfo,
+  searchProduct,
+  getCart,
+  forgetPassword,
 };
