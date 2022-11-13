@@ -164,7 +164,7 @@ let getCart = async (req, res) => {
     });
     if (cart == null) {
       return res.status(200).json({
-        message: "Không có mặt hàng nào trong giở",
+        message: "Không có mặt hàng nào trong giỏ",
         errCode: 0,
       });
     } else {
@@ -206,13 +206,55 @@ let forgetPassword = async (req, res) => {
       exclude: ["password"],
     },
   });
-  sendMail(email, "Quên mật khẩu", newPassword);
+  sendMail(email, "Quên mật khẩu", "password mới: " + newPassword);
   return res.status(200).json({
     message: "Check mail để có xác nhận khôi phục mật khẩu",
     errCode: 0,
   });
 };
 
+let orderItem = async (req, res) => {
+  let token = req.params.token;
+  let itemId = 1;
+  let quantity = 10;
+  let paymentMethod = "Thanh toán khi nhận hàng";
+
+  try {
+    let data = jwt.verify(token, process.env.JWT_SECRET);
+    let user = await db.User.findOne({
+      where: {
+        email: data.email,
+      },
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+    if (user != null) {
+      await db.Order.create({
+        shopId: req.query.shopId,
+        userId: user.id,
+        itemId: req.query.itemId,
+        quantity: req.query.quantity,
+        status: req.query.status,
+        timeOder: req.query.timeOder,
+        paymentMethod: req.query.paymentMethod,
+        addressReceive: req.query.addressReceive,
+        phoneContact: req.query.phoneContact,
+      });
+      return res.status(200).json({
+        message: "Đặt đơn thành công",
+        errCode: 0,
+      });
+    } else {
+      return res.status(200).json({
+        message: "Yêu cầu đăng nhập để tiếp tục",
+        errCode: 0,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
 module.exports = {
   createUser,
   login,
@@ -220,4 +262,5 @@ module.exports = {
   searchProduct,
   getCart,
   forgetPassword,
+  orderItem,
 };

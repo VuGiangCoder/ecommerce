@@ -9,7 +9,7 @@ let initWebRouter = (app) => {
   router.get("/user/search", homeController.searchProduct);
   router.get("/user/cart/:token", homeController.getCart);
   router.get("/user/forget_password", homeController.forgetPassword);
-  // router.post("/user/order", homeController.oderItem);
+  router.post("/user/order/:token", homeController.orderItem);
   // router.post("//user/cancel_order", homeController.cancelOrder);
   // router.post("/user/change_password", homeController.changePassWord);
   app.use("/", router);
