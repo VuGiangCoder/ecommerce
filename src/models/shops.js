@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       shopName: DataTypes.STRING,
       phoneContact: DataTypes.STRING,
       status: DataTypes.STRING,
+      like: DataTypes.INTEGER,
     },
     {
       sequelize,

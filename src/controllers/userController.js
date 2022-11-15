@@ -3,6 +3,7 @@ const crudService = require("../service/CRUDservice");
 const sendMail = require("../service/sendMail");
 var cookieParser = require("cookie-parser");
 const bcrypt = require("bcryptjs");
+const salt = bcrypt.genSaltSync(10);
 const { createJWT } = require("../middleware/JWTAction");
 const jwt = require("jsonwebtoken");
 const { Op } = require("sequelize");
@@ -179,7 +180,9 @@ let getCart = async (req, res) => {
         },
       });
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 let forgetPassword = async (req, res) => {
@@ -267,40 +270,213 @@ let cancelOrder = async (req, res) => {
 
 let changePassword = async (req, res) => {
   let token = req.params.token;
-  let data = jwt.verify(token, process.env.JWT_SECRET);
-  let currentPassword = req.body.currentPassword;
-  let newPassword = req.body.newPassword;
 
-  let user = await db.User.findOne({
-    where: {
-      email: data.email,
-    },
-  });
-  console.log(user);
-  if (user != null) {
-    let check = await bcrypt.compare(currentPassword, user.password);
-    console.log(check);
-    if (check) {
-      let newPasswordBcrypt = await crudService.hashUSerPassword(newPassword);
-      await user.set({
-        password: newPasswordBcrypt,
+  //let currentPassword = req.body.currentPassword;
+  let currentPassword = "Yle4FB7OGh";
+  //let newPassword = req.body.newPassword;
+  let newPassword = "abcdef";
+  try {
+    let data = jwt.verify(token, process.env.JWT_SECRET);
+    let user = await db.User.findOne({
+      where: {
+        email: data.email,
+      },
+    });
+    if (user == null) {
+      return res.status(404).json({
+        message: "Yêu cầu đăng nhập",
+        errCode: 0,
       });
-      await user.save();
+    } else {
+      let check = await bcrypt.compare(currentPassword, user.password);
+      if (check) {
+        let password = await crudService.hashUSerPassword(newPassword);
+        await user.set({
+          password: password,
+        });
+        await user.save();
+        return res.status(200).json({
+          message: "Đổi mật khẩu thành công",
+          errCode: 0,
+        });
+      } else {
+        return res.status(304).json({
+          message: "Yêu cầu đăng nhập",
+          errCode: 0,
+        });
+      }
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "Lỗi server",
+      error: 1,
+    });
+  }
+};
+
+let likeShop = async (req, res) => {
+  let token = req.params.token;
+  let shopId = req.params.shopId;
+  try {
+    let data = jwt.verify(token, process.env.JWT_SECRET);
+    let shop = await db.Shop.findOne({
+      where: {
+        id: shopId,
+      },
+    });
+    if (shop == null) {
+      return res.status(404).json({
+        message: "Shop not found",
+        errCode: 0,
+      });
+    } else {
+      console.log("oke");
+      let user = await db.User.findOne({
+        where: {
+          email: data.email,
+        },
+      });
+      if (user == null) {
+        return res.status(404).json({
+          message: "Yêu cầu đăng nhập",
+          errCode: 0,
+        });
+      } else {
+        let like = shop.like;
+        await shop.set({
+          like: like + 1,
+        });
+        await shop.save();
+        return res.status(200).json({
+          message: "Thích cửa hàng thành công",
+          errCode: 0,
+        });
+      }
+    }
+  } catch {
+    return res.status(500).json({
+      message: "Lỗi server",
+      errCode: 1,
+    });
+  }
+};
+
+let unlikeShop = async (req, res) => {
+  let token = req.params.token;
+  let shopId = req.params.shopId;
+  try {
+    let data = jwt.verify(token, process.env.JWT_SECRET);
+    let shop = await db.Shop.findOne({
+      where: {
+        id: shopId,
+      },
+    });
+    if (shop == null) {
+      return res.status(404).json({
+        message: "Shop not found",
+        errCode: 0,
+      });
+    } else {
+      console.log("oke");
+      let user = await db.User.findOne({
+        where: {
+          email: data.email,
+        },
+      });
+      if (user == null) {
+        return res.status(404).json({
+          message: "Yêu cầu đăng nhập",
+          errCode: 0,
+        });
+      } else {
+        let like = shop.like;
+        if (like === 0) {
+          like = 1;
+        }
+        await shop.set({
+          like: like - 1,
+        });
+        await shop.save();
+        return res.status(200).json({
+          message: "Bỏ thích cửa hàng thành công",
+          errCode: 0,
+        });
+      }
+    }
+  } catch {
+    return res.status(500).json({
+      message: "Lỗi server",
+      errCode: 1,
+    });
+  }
+};
+
+let listComment = async (req, res) => {
+  let token = req.params.token;
+  let page = 1;
+  let size = 1;
+
+  try {
+    var data = jwt.verify(token, process.env.JWT_SECRET);
+    var email = data.email;
+    console.log(email);
+    let user = await db.User.findOne({
+      where: {
+        email: email,
+      },
+      attributes: {
+        exclude: ["password"],
+      },
+    });
+    var userId = user.id;
+    let comment = await db.Recomment.findAll({
+      where: {
+        userId: userId,
+      },
+    });
+    let commentImage = await db.ItemImage.findAll({
+      where: {
+        [Op.or]: [
+          { id: comment[0].commentId },
+          { id: comment[1].commentId },
+          { id: comment[2].commentId },
+          { id: comment[3].commentId },
+          { id: comment[4].commentId },
+          { id: comment[5].commentId },
+          { id: comment[6].commentId },
+          { id: comment[7].commentId },
+          { id: comment[8].commentId },
+          { id: comment[9].commentId },
+          { id: comment[10].commentId },
+          { id: comment[11].commentId },
+          { id: comment[12].commentId },
+          { id: comment[13].commentId },
+          { id: comment[14].commentId },
+          { id: comment[15].commentId },
+          { id: comment[16].commentId },
+          { id: comment[17].commentId },
+        ],
+      },
+      limit: size,
+      offset: (page - 1) * size,
+    });
+    if (comment == null) {
       return res.status(200).json({
-        message: "Đổi mật khẩu thành công",
+        message: "Không có comment nao",
         errCode: 0,
       });
     } else {
       return res.status(200).json({
-        message: "Mật khẩu hiện tại không đúng",
+        message: "Danh sách comment người dùng",
         errCode: 0,
+        payload: {
+          comment: ["comment", "commentImage"],
+        },
       });
     }
-  } else {
-    return res.status(200).json({
-      message: "Yêu cầu đăng nhập",
-      errCode: 0,
-    });
+  } catch (error) {
+    console.log(error);
   }
 };
 module.exports = {
@@ -313,4 +489,7 @@ module.exports = {
   orderItem,
   cancelOrder,
   changePassword,
+  likeShop,
+  unlikeShop,
+  listComment,
 };
