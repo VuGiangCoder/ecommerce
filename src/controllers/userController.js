@@ -471,7 +471,8 @@ let listComment = async (req, res) => {
         message: "Danh sách comment người dùng",
         errCode: 0,
         payload: {
-          comment: ["comment", "commentImage"],
+          comment: comment,
+          commentImage: commentImage,
         },
       });
     }
