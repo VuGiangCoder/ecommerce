@@ -186,7 +186,7 @@ let getCart = async (req, res) => {
 };
 
 let forgetPassword = async (req, res) => {
-  let email = "giang2010gc@gmail.com";
+  let email = "giang2010gc1331@gmail.com";
   let user = await db.User.findOne({
     where: {
       email: email,
@@ -197,12 +197,13 @@ let forgetPassword = async (req, res) => {
     numbers: true,
   });
   let password = await crudService.hashUSerPassword(newPassword);
-  await user.set({
-    password: password,
-  });
+  // await user.set({
+  //   password: password,
+  // });
+  user.password = password;
   await user.save();
-
-  sendMail(email, "Quên mật khẩu", "password mới: " + newPassword);
+  console.log(user);
+  sendMail(email, "Quên mật khẩu", "password mới: " + password);
   return res.status(200).json({
     message: "Check mail để có xác nhận khôi phục mật khẩu",
     errCode: 0,
