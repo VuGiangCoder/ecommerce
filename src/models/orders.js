@@ -13,16 +13,15 @@ module.exports = (sequelize, DataTypes) => {
   }
   Order.init(
     {
-      shopId: DataTypes.INTEGER,
       userId: DataTypes.INTEGER,
       itemId: DataTypes.INTEGER,
       quantity: DataTypes.INTEGER,
-      status: DataTypes.STRING,
-      timeOder: DataTypes.DATE,
-      paymentMethod: DataTypes.STRING,
+      isPayment: DataTypes.BOOLEAN,
+      methodPayment: DataTypes.ENUM(['paypal','afterReveice']),
+      deliver: DataTypes.ENUM(['delivering','done','cancel']),
+      timeOrder: DataTypes.DATE,
       addressReceive: DataTypes.STRING,
       phoneContact: DataTypes.STRING,
-      createAt: DataTypes.DATE,
     },
     {
       sequelize,

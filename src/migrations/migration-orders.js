@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("orders", {
+    await queryInterface.createTable("Orders", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -19,32 +19,47 @@ module.exports = {
       //   addressReceive: DataTypes.STRING,
       //   phoneContact: DataTypes.STRING,
       //   createAt: DataTypes.DATE,
-      shopId: {
-        type: Sequelize.INTEGER,
-      },
       userId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
       },
       itemId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
       },
       quantity: {
         type: Sequelize.INTEGER,
+        validate: {
+          min: 1,
+        }
       },
-      status: {
-        type: Sequelize.STRING,
+      isPayment: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
       },
-      timeOder: {
+      methodPayment: {
+        type: Sequelize.ENUM(['paypal','afterReveice']),
+        allowNull: false,
+      },
+      deliver: {
+        type: Sequelize.ENUM(['delivering','done','cancel']),
+      },
+      timeOrder: {
         type: Sequelize.DATE,
-      },
-      paymentMethod: {
-        type: Sequelize.STRING,
       },
       addressReceive: {
         type: Sequelize.STRING,
+        validate: {
+          len: [1,256],
+          notEmpty: true,
+        },
       },
       phoneContact: {
         type: Sequelize.STRING,
+        validate: {
+          isNumeric: true,
+          notEmpty: true,
+        }
       },
 
       createdAt: {
@@ -58,6 +73,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("orders");
+    await queryInterface.dropTable("Orders");
   },
 };

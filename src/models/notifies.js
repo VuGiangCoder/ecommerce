@@ -9,11 +9,11 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Notifie.belongsTo(models.User, {
-        foreignKey: "receiverId",
-        targetKey: "id",
-        as: "ReceiverId",
-      });
+      // Notifie.belongsTo(models.User, {
+      //   foreignKey: "receiverId",
+      //   targetKey: "id",
+      //   as: "ReceiverId",
+      // });
     }
   }
   Notifie.init(

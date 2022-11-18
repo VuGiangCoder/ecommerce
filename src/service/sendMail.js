@@ -12,12 +12,13 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendMail = async (reveicer, subject, text) => {
+const sendMail = async (reveicer, subject, text,html) => {
   await transporter.sendMail({
     from: '"ecommerce" <khonghoatay@gmail.com>',
     to: reveicer,
     subject,
     text,
+    html
   });
   console.log("đã gửi");
 };

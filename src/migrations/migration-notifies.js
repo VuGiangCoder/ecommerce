@@ -2,23 +2,27 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("user_tokens", {
+    await queryInterface.createTable("Notifies", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      //   ownerId: DataTypes.INTEGER,
-      //   description: DataTypes.TEXT,
-      //   shopName: DataTypes.STRING,
-      //   phoneContact: DataTypes.STRING,
-      //   status: DataTypes.STRING,
-      email: {
-        type: Sequelize.STRING,
+      //   receiverId: DataTypes.INTEGER,
+      //   senderId: DataTypes.INTEGER,
+      //   text: DataTypes.TEXT,
+      //   createAt: DataTypes.DATE,
+      receiverId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
       },
-      token: {
-        type: Sequelize.STRING,
+      senderId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      text: {
+        type: Sequelize.TEXT,
       },
 
       createdAt: {
@@ -32,6 +36,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("user_tokens");
+    await queryInterface.dropTable("Notifies");
   },
 };

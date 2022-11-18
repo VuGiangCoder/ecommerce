@@ -2,25 +2,35 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("carts", {
+    await queryInterface.createTable("Recomments", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      //   ownerId: DataTypes.INTEGER,
-      //   description: DataTypes.TEXT,
-      //   shopName: DataTypes.STRING,
-      //   phoneContact: DataTypes.STRING,
-      //   status: DataTypes.STRING,
+      //   userId: DataTypes.INTEGER,
+      //   itemId: DataTypes.INTEGER,
+      //   text: DataTypes.TEXT,
+      //   star: DataTypes.INTEGER,
       userId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
       },
       itemId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
       },
-
+      text: {
+        type: Sequelize.TEXT,
+      },
+      star: {
+        type: Sequelize.INTEGER,
+        validate: {
+          min: 0,
+          max: 5,
+        }
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -32,6 +42,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("carts");
+    await queryInterface.dropTable("Recomments");
   },
 };

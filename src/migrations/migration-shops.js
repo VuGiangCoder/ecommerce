@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("shops", {
+    await queryInterface.createTable("Shops", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -16,21 +16,39 @@ module.exports = {
       //   status: DataTypes.STRING,
       ownerId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      logo: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       description: {
         type: Sequelize.TEXT,
       },
       shopName: {
         type: Sequelize.STRING,
+        validate: {
+          len: [1,64],
+          notEmpty: true,
+        }
       },
       phoneContact: {
         type: Sequelize.STRING,
+        validate: {
+          isNumeric: true,
+          notEmpty: true,
+          len: [8,15],
+        }
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM(['open', 'close']),
+
       },
       like: {
         type: Sequelize.INTEGER,
+        validate: {
+          min: 0,
+        }
       },
       createdAt: {
         allowNull: false,
@@ -43,6 +61,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("shops");
+    await queryInterface.dropTable("Shops");
   },
 };

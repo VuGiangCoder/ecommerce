@@ -1,5 +1,5 @@
 "use strict";
-const { Model } = require("sequelize");
+const { Model, Sequelize } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -9,24 +9,68 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      User.hasMany(models.Notifie, {
-        foreignKey: "receiverId",
-        as: "ReceiverId",
-      });
+      // User.hasMany(models.Notifie, {
+      //   foreignKey: "receiverId",
+      //   as: "ReceiverId",
+      // });
     }
   }
   User.init(
     {
-      email: DataTypes.STRING,
-      password: DataTypes.STRING,
-      fullname: DataTypes.STRING,
-      position: DataTypes.STRING,
-      phoneNumber: DataTypes.STRING,
-      gender: DataTypes.BOOLEAN,
+      id: {
+        type: DataTypes.STRING,
+        autoIncrement: true,
+        primaryKey: true,
+        allowNull:false,
+      },
+      email: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+        validate: {
+          isEmail: true,
+        }
+      },
+      password: {
+        type: DataTypes.STRING,
+        validate: {
+          len: [6, 32],
+        }
+      },
+      fullname: {
+        type: DataTypes.STRING,
+        validate: {
+          notEmpty: true,
+        }
+      },
+      position: {
+        type: DataTypes.ENUM(['admin', 'seller', 'buyer']),
+      },
+      phoneNumber: {
+        type: DataTypes.STRING,
+        validate: {
+          isNumeric: true
+        }
+      },
+      gender: {
+        type: DataTypes.ENUM(['male', 'female']),
+      },
       imageAvartar: DataTypes.STRING,
-      limitCreateShop: DataTypes.INTEGER,
-      address: DataTypes.STRING,
-      status: DataTypes.STRING,
+      limitCreateShop: {
+        type: DataTypes.INTEGER,
+        validate: {
+          min: 0,
+        }
+      },
+      address: {
+        type: DataTypes.STRING,
+        validate: {
+          notEmpty: true,
+        }
+      },
+      status: {
+        type: DataTypes.ENUM(['active','non-active']),
+      },
     },
     {
       sequelize,

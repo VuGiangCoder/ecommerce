@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("promotions", {
+    await queryInterface.createTable("ItemImages", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -10,24 +10,14 @@ module.exports = {
         type: Sequelize.INTEGER,
       },
       //   itemId: DataTypes.INTEGER,
-      //   reducePercent: DataTypes.INTEGER,
-      //   text: DataTypes.TEXT,
-      //   dayBegin: DataTypes.DATE,
-      //   dayFinish: DataTypes.DATE,
+      //   image: DataTypes.STRING,
       itemId: {
         type: Sequelize.INTEGER,
+        allowNull: false,
       },
-      reducePercent: {
-        type: Sequelize.INTEGER,
-      },
-      text: {
-        type: Sequelize.TEXT,
-      },
-      dayBegin: {
-        type: Sequelize.DATE,
-      },
-      dayFinish: {
-        type: Sequelize.DATE,
+
+      image: {
+        type: Sequelize.STRING,
       },
 
       createdAt: {
@@ -41,6 +31,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("promotions");
+    await queryInterface.dropTable("ItemImages");
   },
 };

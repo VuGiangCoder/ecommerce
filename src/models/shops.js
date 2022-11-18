@@ -13,12 +13,37 @@ module.exports = (sequelize, DataTypes) => {
   }
   Shop.init(
     {
-      ownerId: DataTypes.INTEGER,
+      ownerId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      logo: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       description: DataTypes.TEXT,
-      shopName: DataTypes.STRING,
-      phoneContact: DataTypes.STRING,
-      status: DataTypes.STRING,
-      like: DataTypes.INTEGER,
+      shopName: {
+        type: DataTypes.STRING,
+        validate: {
+          len: [1,64],
+          notEmpty: true,
+        }
+      },
+      phoneContact: {
+        type: DataTypes.STRING,
+        validate: {
+          isNumeric: true,
+          notEmpty: true,
+          len: [8,15],
+        }
+      },
+      status: DataTypes.ENUM(['open', 'close']),
+      like: {
+        type: DataTypes.INTEGER,
+        validate: {
+          min: 0,
+        }
+      },
     },
     {
       sequelize,

@@ -13,7 +13,6 @@ module.exports = (sequelize, DataTypes) => {
   }
   Promotion.init(
     {
-      itemId: DataTypes.INTEGER,
       reducePercent: DataTypes.INTEGER,
       text: DataTypes.TEXT,
       dayBegin: DataTypes.DATE,

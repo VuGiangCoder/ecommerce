@@ -2,52 +2,62 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("users", {
+    await queryInterface.createTable("Users", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      // email: DataTypes.STRING,
-      // password: DataTypes.STRING,
-      // fullname: DataTypes.STRING,
-      // position: DataTypes.STRING,
-      // phoneNumber: DataTypes.STRING,
-      // gender: DataTypes.BOOLEAN,
-      // imageAvartar: DataTypes.STRING,
-      // limitCreateShop: DataTypes.INTEGER,
-      // address: DataTypes.STRING,
-      // status: DataTypes.STRING,
       email: {
         type: Sequelize.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+          isEmail: true,
+        }
       },
       password: {
         type: Sequelize.STRING,
+        validate: {
+          len: [6,32],
+        }
       },
       fullname: {
         type: Sequelize.STRING,
+        validate: {
+          notEmpty: true,
+        }
       },
       position: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM(['admin', 'seller', 'buyer'])
       },
       phoneNumber: {
         type: Sequelize.STRING,
+        validate: {
+          isNumeric: true
+        }
       },
       gender: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM(['male', 'female']),
       },
-      imageAvartar: {
+      imageAvatar: {
         type: Sequelize.STRING,
       },
       limitCreateShop: {
         type: Sequelize.INTEGER,
+        validate: {
+          min: 0,
+        }
       },
       address: {
         type: Sequelize.STRING,
+        validate: {
+          notEmpty: true,
+        }
       },
       status: {
-        type: Sequelize.STRING,
+        type: Sequelize.ENUM(['active','non-active']),
       },
       createdAt: {
         allowNull: false,
@@ -60,6 +70,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("users");
+    await queryInterface.dropTable("Users");
   },
 };

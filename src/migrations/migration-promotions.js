@@ -2,28 +2,33 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("recomments", {
+    await queryInterface.createTable("Promotions", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      //   userId: DataTypes.INTEGER,
       //   itemId: DataTypes.INTEGER,
+      //   reducePercent: DataTypes.INTEGER,
       //   text: DataTypes.TEXT,
-      //   star: DataTypes.INTEGER,
-      userId: {
+      //   dayBegin: DataTypes.DATE,
+      //   dayFinish: DataTypes.DATE,
+      reducePercent: {
         type: Sequelize.INTEGER,
-      },
-      itemId: {
-        type: Sequelize.INTEGER,
+        validate: {
+          min: 0,
+          max: 1,
+        }
       },
       text: {
         type: Sequelize.TEXT,
       },
-      star: {
-        type: Sequelize.INTEGER,
+      dayBegin: {
+        type: Sequelize.DATE,
+      },
+      dayFinish: {
+        type: Sequelize.DATE,
       },
 
       createdAt: {
@@ -37,6 +42,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("recomments");
+    await queryInterface.dropTable("Promotions");
   },
 };
