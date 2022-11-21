@@ -26,6 +26,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       receiverId: DataTypes.INTEGER,
       senderId: DataTypes.INTEGER,
+      status: DataTypes.ENUM(['read', 'unread']),
       text: DataTypes.TEXT,
       createAt: DataTypes.DATE,
     },

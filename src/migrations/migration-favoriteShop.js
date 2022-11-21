@@ -2,32 +2,26 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Notifies', {
+    await queryInterface.createTable('FavoriteShops', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      //   receiverId: DataTypes.INTEGER,
-      //   senderId: DataTypes.INTEGER,
-      //   text: DataTypes.TEXT,
-      //   createAt: DataTypes.DATE,
-      receiverId: {
+      //   ownerId: DataTypes.INTEGER,
+      //   description: DataTypes.TEXT,
+      //   shopName: DataTypes.STRING,
+      //   phoneContact: DataTypes.STRING,
+      //   status: DataTypes.STRING,
+      shopId: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      senderId: {
+      userId: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      text: {
-        type: Sequelize.TEXT,
-      },
-      status: {
-        type: Sequelize.ENUM(['read','unread']),
-      },
-
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -39,6 +33,6 @@ module.exports = {
     });
   },
   async down(queryInterface) {
-    await queryInterface.dropTable('Notifies');
+    await queryInterface.dropTable('FavoriteShops');
   },
 };

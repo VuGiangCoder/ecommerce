@@ -23,16 +23,6 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      itemId: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-      },
-      quantity: {
-        type: Sequelize.INTEGER,
-        validate: {
-          min: 1,
-        },
-      },
       isPayment: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
@@ -42,7 +32,7 @@ module.exports = {
         allowNull: false,
       },
       deliver: {
-        type: Sequelize.ENUM(['delivering', 'done', 'cancel']),
+        type: Sequelize.ENUM(['none','delivering', 'done', 'cancel']),
       },
       timeOrder: {
         type: Sequelize.DATE,

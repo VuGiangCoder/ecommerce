@@ -2,8 +2,29 @@
 const RESPONSE = require('../schema/response');
 const tokenService = require('../service/token');
 const db = require('../models');
+const token = require('../service/token');
 
 const middleware = {
+  async refreshToken(req,res) {
+    const newToken = token.createToken({
+      id: req.userId,
+      position: req.userPosition,
+      email: req.userEmail,
+    })
+    await db.StoreToken.update(
+      {
+        token: newToken,
+        updatedAt: new Date(),
+      },
+      {
+        where: {
+          userId: req.userId,
+        }
+      },
+    );
+    res.cookie('token', newToken);  
+  },
+
   async verifyToken(req, res, next) {
     const { token } = req.cookies;
     if (!token) {
@@ -24,6 +45,7 @@ const middleware = {
     req.userEmail = payload.email;
     req.userPosition = payload.position;
     req.userId = payload.id;
+    refreshToken();
     next();
   },
 

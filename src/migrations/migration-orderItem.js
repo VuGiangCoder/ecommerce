@@ -2,32 +2,40 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Notifies', {
+    await queryInterface.createTable('OrderItems', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      //   receiverId: DataTypes.INTEGER,
-      //   senderId: DataTypes.INTEGER,
-      //   text: DataTypes.TEXT,
+      //   shopId: DataTypes.INTEGER,
+      //   userId: DataTypes.INTEGER,
+      //   itemId: DataTypes.INTEGER,
+      //   : DataTypes.INTEGER,
+      //   status: DataTypes.STRING,
+      //   timeOder: DataTypes.DATE,
+      //   paymentMethod: DataTypes.STRING,
+      //   addressReceive: DataTypes.STRING,
+      //   phoneContact: DataTypes.STRING,
       //   createAt: DataTypes.DATE,
-      receiverId: {
+      orderId: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      senderId: {
+      itemId: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-      text: {
-        type: Sequelize.TEXT,
+      quantity: {
+        type: Sequelize.INTEGER,
+        validate: {
+          min: 1,
+        },
       },
-      status: {
-        type: Sequelize.ENUM(['read','unread']),
+      price: {
+        type: Sequelize.INTEGER,   
       },
-
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -39,6 +47,6 @@ module.exports = {
     });
   },
   async down(queryInterface) {
-    await queryInterface.dropTable('Notifies');
+    await queryInterface.dropTable('Orders');
   },
 };

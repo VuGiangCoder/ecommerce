@@ -2,11 +2,12 @@ const express = require('express');
 
 const router = express.Router();
 const userController = require('../controllers/userController');
+const middleware = require('../middleware/middleware');
 
 router.post('/regis', userController.createUser);
 router.post('/login', userController.login);
-// router.get("/profile", userController.getInfo);
-// router.get("/search", userController.searchProduct);
+router.get('/profile',middleware.verifyToken, userController.getInfo);
+router.get('/search_product', userController.searchProduct);
 // router.get("/cart/", userController.getCart);
 // router.get("/forget_password", userController.forgetPassword);
 // router.post("/order/", userController.orderItem);

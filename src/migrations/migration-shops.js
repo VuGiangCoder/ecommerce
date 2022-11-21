@@ -42,13 +42,6 @@ module.exports = {
       },
       status: {
         type: Sequelize.ENUM(['open', 'close']),
-
-      },
-      like: {
-        type: Sequelize.INTEGER,
-        validate: {
-          min: 0,
-        },
       },
       createdAt: {
         allowNull: false,

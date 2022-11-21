@@ -21,6 +21,9 @@ module.exports = {
       token: {
         type: Sequelize.STRING,
       },
+      type: {
+        type: Sequelize.ENUM(['login', 'forget']),
+      },
 
       createdAt: {
         allowNull: false,

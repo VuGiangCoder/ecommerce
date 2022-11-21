@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       token: DataTypes.STRING,
+      type: DataTypes.ENUM(['login', 'forget',]),
     },
     {
       sequelize,

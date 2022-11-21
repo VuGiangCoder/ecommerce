@@ -6,7 +6,7 @@ const token = {
   },
   verifyToken(valueToken) {
     jwt.verify(valueToken, process.env.JWT_SECRET, (err, decode) => {
-      if (err) return err.message;
+      if (err) return false;
       return decode;
     });
   },

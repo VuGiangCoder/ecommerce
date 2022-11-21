@@ -15,21 +15,18 @@ module.exports = (sequelize, DataTypes) => {
         targetKey: 'id',
         as: 'userData',
       });
-      Order.belongsTo(models.Item, {
-        foreignKey: 'itemId',
-        targetKey: 'id',
-        as: 'itemData',
-      });
+      Order.hasMany(models.OrderItem, {
+        foreignKey: 'orderId',
+        as: 'orderItemData',
+      })
     }
   }
   Order.init(
     {
       userId: DataTypes.INTEGER,
-      itemId: DataTypes.INTEGER,
-      quantity: DataTypes.INTEGER,
       isPayment: DataTypes.BOOLEAN,
       methodPayment: DataTypes.ENUM(['paypal', 'afterReveice']),
-      deliver: DataTypes.ENUM(['delivering', 'done', 'cancel']),
+      deliver: DataTypes.ENUM(['none','delivering', 'done', 'cancel']),
       timeOrder: DataTypes.DATE,
       addressReceive: DataTypes.STRING,
       phoneContact: DataTypes.STRING,
