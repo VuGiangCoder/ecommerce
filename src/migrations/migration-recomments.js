@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Recomments", {
+    await queryInterface.createTable('Recomments', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -29,7 +29,7 @@ module.exports = {
         validate: {
           min: 0,
           max: 5,
-        }
+        },
       },
       createdAt: {
         allowNull: false,
@@ -41,7 +41,7 @@ module.exports = {
       },
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Recomments");
+  async down(queryInterface) {
+    await queryInterface.dropTable('Recomments');
   },
 };

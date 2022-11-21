@@ -1,65 +1,122 @@
-const db = require("../models/index");
-const crudService = require("../service/CRUDservice");
-const sendMail = require("../service/sendMail");
-const bcrypt = require("bcryptjs");
-const salt = bcrypt.genSaltSync(10);
-const { createJWT } = require("../middleware/JWTAction");
-const jwt = require("jsonwebtoken");
-const { Op } = require("sequelize");
-const RESPONSE = require("../schema/response");
-const { default: convertBcrypt } = require("../service/convertBcrypt");
-const serviceImage = require("../service/serviceImage");
-const token = require("../service/token");
+const db = require('../models/index');
+// const { Op } = require('sequelize');
+const sendMail = require('../service/sendMail');
+const RESPONSE = require('../schema/response');
+const convertBcrypt = require('../service/convertBcrypt');
+// const serviceImage = require('../service/serviceImage');
+const token = require('../service/token');
 
 const userController = {
   async createUser(req, res) {
-    //status = non-active
-    const {email, password, fullname, position, phoneNumber, gender, limitCreateShop, address} = req.body;
-    console.log(req.body);
-    const checkUser = await db.User.findByPk(1);
-    console.log(checkUser);
-    // if (checkUser && checkUser.status === 'active') 
-    //   return res.status(200).send(RESPONSE('Email đã được sử dụng',0));
-    // const objInsert = {
-    //   email,
-    //   password: convertBcrypt.hash(password),
-    //   fullname,
-    //   position: ['admin','buyer','seller'].includes(position) ? position : 'buyer',
-    //   phoneNumber,
-    //   gender: ['male','female'].includes(gender) ? gender : 'male',
-    //   limitCreateShop: limitCreateShop ? limitCreateShop : 0,
-    //   address,
-    //   status: 'non-active',
-    // };
-    // let idUser;
-    // // if (imageAvatar) {
-    // //   const checkImage = serviceImage.checkTypeImage(imageAvatar);
-    // //   if (!checkImage) return res.status(200).send(RESPONSE('Ảnh không hợp lệ',0));
-    // //   const storeImage = serviceImage.saveImage(imageAvatar,'avatar');
-    // //   objInsert.imageAvatar = storeImage;
-    // // }
-    // if(checkUser && checkUser.status === 'non-active') {
-    //   checkUser.set({
-    //     ...objInsert
-    //   });
-    //   await checkUser.save();
-    //   idUser = checkUser.id;
-    // } else idUser = await db.User.create(objInsert);
-    // const code = token.createToken({email});
-    // if(checkUser && checkUser.status === 'non-active') {
-    //   await db.StoreToken.update({token:code},{
-    //     where: {userId: checkUser.id}
-    //   })
-    // } else await db.StoreToken.create({
-    //   userId: idUser,
-    //   token: code
-    // })
-    
-    // sendMail(email,'Xác thực đăng ký','',`<a href='${req.headers.origin}/confirm_regis?email=${email}&code=${code}'>Tại đây</a>`);
+    // status = non-active
+    const {
+      email, password, fullname, position,
+      phoneNumber, gender, address,
+    } = req.body;
+    const checkUser = await db.User.findOne({
+      where: { email },
+    });
+    if (checkUser && checkUser.status === 'active') {
+      return res.status(200).send(RESPONSE('Email đã được sử dụng', 0));
+    }
 
-    return res.status(200).send(RESPONSE('Xác nhận đăng ký trong email',0));  
+    const objInsert = {
+      email,
+      password: convertBcrypt.hash(password),
+      fullname,
+      position: ['admin', 'buyer', 'seller'].includes(position) ? position : 'buyer',
+      phoneNumber,
+      gender: ['male', 'female'].includes(gender) ? gender : 'male',
+      limitCreateShop: 0,
+      address,
+      status: 'non-active',
+    };
+    let idUser;
+    // if (imageAvatar) {
+    //   const checkImage = serviceImage.checkTypeImage(imageAvatar);
+    //   if (!checkImage) return res.status(200).send(RESPONSE('Ảnh không hợp lệ',0));
+    //   const storeImage = serviceImage.saveImage(imageAvatar,'avatar');
+    //   objInsert.imageAvatar = storeImage;
+    // }
+    if (checkUser && checkUser.status === 'non-active') {
+      checkUser.set({
+        ...objInsert,
+      });
+      await checkUser.save();
+      idUser = checkUser.id;
+    } else idUser = await db.User.create(objInsert);
+    const code = token.createToken({ email });
+    if (checkUser && checkUser.status === 'non-active') {
+      await db.StoreToken.update({ token: code }, {
+        where: { userId: checkUser.id },
+      });
+    } else {
+      await db.StoreToken.create({
+        userId: idUser,
+        token: code,
+      });
+    }
+
+    sendMail(email, 'Xác thực đăng ký', '', `<a href='${req.headers.origin}/confirm_regis?email=${email}&code=${code}'>Tại đây</a>`);
+
+    return res.status(200).send(RESPONSE('Xác nhận đăng ký trong email', 0));
   },
-}
+  async login(req, res) {
+    const { email, password } = req.body;
+    const checkUser = await db.User.findOne({
+      // raw: true,
+      // nest: true,
+      where: { email },
+      include: [
+        {
+          model: db.Cart,
+          as: 'cartData',
+          attributes: ['itemId', 'quantity'],
+        },
+        {
+          model: db.Notifie,
+          as: 'notifyReData',
+          attributes: ['text', 'createdAt'],
+        },
+      ],
+    });
+    if (!checkUser) {
+      return res.status(200).send(RESPONSE('Thông tin không chính xác', -1));
+    }
+    if (checkUser.status !== 'active') {
+      return res.status(200).send(RESPONSE('Email chưa được kích hoạt', -1));
+    }
+    const checkPassword = convertBcrypt.compare(password, checkUser.password);
+    if (!checkPassword) {
+      return res.status(200).send(RESPONSE('Thông tin không chính xác', -1));
+    }
+    const newToken = token.createToken({
+      id: checkUser.id,
+      email: checkUser.email,
+      position: checkUser.position,
+    });
+    const checkStoreToken = await db.StoreToken.findOne({
+      where: {
+        userId: checkUser.id,
+      },
+    });
+    if (!checkStoreToken) {
+      await db.StoreToken.create({
+        userId: checkUser.id,
+        token: newToken,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    } else {
+      checkStoreToken.token = newToken;
+      checkStoreToken.updatedAt = new Date();
+      await checkStoreToken.save();
+    }
+    delete checkUser.dataValues.password;
+    res.cookie('token', newToken);
+    return res.status(200).send(RESPONSE('Đăng nhập thành công', 0, checkUser.dataValues));
+  },
+};
 
 // const createUser = async (req, res) => {
 //   req.body.email = "giang2010gc1331@gmail.com";

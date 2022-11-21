@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Promotions", {
+    await queryInterface.createTable('Promotions', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -14,12 +14,16 @@ module.exports = {
       //   text: DataTypes.TEXT,
       //   dayBegin: DataTypes.DATE,
       //   dayFinish: DataTypes.DATE,
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
       reducePercent: {
         type: Sequelize.INTEGER,
         validate: {
           min: 0,
           max: 1,
-        }
+        },
       },
       text: {
         type: Sequelize.TEXT,
@@ -41,7 +45,7 @@ module.exports = {
       },
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Promotions");
+  async down(queryInterface) {
+    await queryInterface.dropTable('Promotions');
   },
 };

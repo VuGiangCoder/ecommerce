@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Users", {
+    await queryInterface.createTable('Users', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -15,28 +15,25 @@ module.exports = {
         unique: true,
         validate: {
           isEmail: true,
-        }
+        },
       },
       password: {
         type: Sequelize.STRING,
-        validate: {
-          len: [6,32],
-        }
       },
       fullname: {
         type: Sequelize.STRING,
         validate: {
           notEmpty: true,
-        }
+        },
       },
       position: {
-        type: Sequelize.ENUM(['admin', 'seller', 'buyer'])
+        type: Sequelize.ENUM(['admin', 'seller', 'buyer']),
       },
       phoneNumber: {
         type: Sequelize.STRING,
         validate: {
-          isNumeric: true
-        }
+          isNumeric: true,
+        },
       },
       gender: {
         type: Sequelize.ENUM(['male', 'female']),
@@ -48,16 +45,16 @@ module.exports = {
         type: Sequelize.INTEGER,
         validate: {
           min: 0,
-        }
+        },
       },
       address: {
         type: Sequelize.STRING,
         validate: {
           notEmpty: true,
-        }
+        },
       },
       status: {
-        type: Sequelize.ENUM(['active','non-active']),
+        type: Sequelize.ENUM(['active', 'non-active']),
       },
       createdAt: {
         allowNull: false,
@@ -69,7 +66,7 @@ module.exports = {
       },
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Users");
+  async down(queryInterface) {
+    await queryInterface.dropTable('Users');
   },
 };

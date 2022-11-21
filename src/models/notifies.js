@@ -1,5 +1,6 @@
-"use strict";
-const { Model } = require("sequelize");
+'use strict';
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Notifie extends Model {
     /**
@@ -9,11 +10,16 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      // Notifie.belongsTo(models.User, {
-      //   foreignKey: "receiverId",
-      //   targetKey: "id",
-      //   as: "ReceiverId",
-      // });
+      Notifie.belongsTo(models.User, {
+        foreignKey: 'receiverId',
+        targetKey: 'id',
+        as: 'userReId',
+      });
+      Notifie.belongsTo(models.User, {
+        foreignKey: 'senderId',
+        targetKey: 'id',
+        as: 'userSeId',
+      });
     }
   }
   Notifie.init(
@@ -25,8 +31,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Notifie",
-    }
+      modelName: 'Notifie',
+    },
   );
   return Notifie;
 };

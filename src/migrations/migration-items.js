@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Items", {
+    await queryInterface.createTable('Items', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -27,8 +27,8 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         validate: {
-          min: 0
-        }
+          min: 0,
+        },
       },
       itemTypeId: {
         type: Sequelize.INTEGER,
@@ -38,13 +38,13 @@ module.exports = {
         type: Sequelize.INTEGER,
         allowNull: false,
         validate: {
-          min: 0
-        }
+          min: 0,
+        },
       },
       name: {
         type: Sequelize.STRING,
         validate: {
-          len: [1,256],
+          len: [1, 256],
           notEmpty: true,
           allowNull: false,
         },
@@ -60,7 +60,7 @@ module.exports = {
       },
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Items");
+  async down(queryInterface) {
+    await queryInterface.dropTable('Items');
   },
 };

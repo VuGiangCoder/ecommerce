@@ -1,5 +1,6 @@
-"use strict";
-const { Model, DATE } = require("sequelize");
+'use strict';
+const { Model } = require('sequelize');
+
 module.exports = (sequelize, DataTypes) => {
   class Promotion extends Model {
     /**
@@ -9,10 +10,20 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Promotion.belongsTo(models.User, {
+        foreignKey: 'userId',
+        targetKey: 'id',
+        as: 'userData',
+      });
+      Promotion.hasMany(models.PromotionItem, {
+        foreignKey: 'promotionId',
+        as: 'promotionItemData',
+      });
     }
   }
   Promotion.init(
     {
+      userId: DataTypes.INTEGER,
       reducePercent: DataTypes.INTEGER,
       text: DataTypes.TEXT,
       dayBegin: DataTypes.DATE,
@@ -20,8 +31,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: "Promotion",
-    }
+      modelName: 'Promotion',
+    },
   );
   return Promotion;
 };

@@ -2,18 +2,11 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    return queryInterface.bulkInsert('Users', [
+    return queryInterface.bulkInsert('Carts', [
       {
-        email: 'admin@gmail.com',
-        password: '123456',
-        fullname: 'Đỗ Văn Nam',
-        address: 'Hà Nội',
-        gender: 'male',
-        position: 'admin',
-        phoneNumber: '0339501427',
-        imageAvatar: '',
-        limitCreateShop: 0,
-        status: 'active',
+        userId: 1,
+        itemId: 100,
+        quantity: 999,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

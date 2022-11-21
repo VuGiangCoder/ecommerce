@@ -1,9 +1,10 @@
-const express = require("express");
-const router = express.Router();
-const userController = require("../controllers/userController");
+const express = require('express');
 
-router.post("/regis", userController.createUser);
-// router.post("/login", userController.login);
+const router = express.Router();
+const userController = require('../controllers/userController');
+
+router.post('/regis', userController.createUser);
+router.post('/login', userController.login);
 // router.get("/profile", userController.getInfo);
 // router.get("/search", userController.searchProduct);
 // router.get("/cart/", userController.getCart);

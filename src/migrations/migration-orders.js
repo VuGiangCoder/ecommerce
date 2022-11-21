@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("Orders", {
+    await queryInterface.createTable('Orders', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -31,18 +31,18 @@ module.exports = {
         type: Sequelize.INTEGER,
         validate: {
           min: 1,
-        }
+        },
       },
       isPayment: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
       methodPayment: {
-        type: Sequelize.ENUM(['paypal','afterReveice']),
+        type: Sequelize.ENUM(['paypal', 'afterReveice']),
         allowNull: false,
       },
       deliver: {
-        type: Sequelize.ENUM(['delivering','done','cancel']),
+        type: Sequelize.ENUM(['delivering', 'done', 'cancel']),
       },
       timeOrder: {
         type: Sequelize.DATE,
@@ -50,7 +50,7 @@ module.exports = {
       addressReceive: {
         type: Sequelize.STRING,
         validate: {
-          len: [1,256],
+          len: [1, 256],
           notEmpty: true,
         },
       },
@@ -59,7 +59,7 @@ module.exports = {
         validate: {
           isNumeric: true,
           notEmpty: true,
-        }
+        },
       },
 
       createdAt: {
@@ -72,7 +72,7 @@ module.exports = {
       },
     });
   },
-  async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("Orders");
+  async down(queryInterface) {
+    await queryInterface.dropTable('Orders');
   },
 };
