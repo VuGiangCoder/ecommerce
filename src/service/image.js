@@ -33,7 +33,7 @@ const image = {
     const buff = Buffer.from(base64.split('base64,')[1], 'base64');
     const filename = `${uuid() + Date.now()}.jpg`;
     const foldername = `${path}/${filename}`;
-    fs.writeFileSync(`./public/${foldername}`, buff);
+    fs.writeFileSync(`./public/img/${foldername}`, buff);
     return foldername;
   },
   deleteImage(path) {
