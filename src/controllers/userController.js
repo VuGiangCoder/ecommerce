@@ -6,6 +6,7 @@ const convertBcrypt = require('../service/convertBcrypt');
 // const serviceImage = require('../service/serviceImage');
 const token = require('../service/token');
 const image = require('../service/image');
+const paypal = require('../config/paypal');
 
 const userController = {
   async createUser(req, res) {
@@ -150,7 +151,7 @@ const userController = {
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
     if (name) {
       options.name = {
-        [Op.iLike]: `%${name}%`,
+        [Op.iLike]: `${name}%`,
       }
     }
     if (priceMin) {
@@ -318,7 +319,7 @@ const userController = {
     try {
       const trx = new Transaction();
       const { cart } = req.cookies;
-      const checkCartUser = await db.Cart.finAll({
+      const checkCartUser = await db.Cart.findAll({
         raw: true,
         where: {
           userId: req.userId,
@@ -372,19 +373,49 @@ const userController = {
     */
   },
   async orderItems(req, res) {
+    try {
+      const trx = new Transaction();
+      //promotionId
+      const { items, isPayment, methodPayment, addressReceive, phoneContact } = req.body;
+      const newOrder = await db.Order.create({
+        userId: req.userId,
+        isPayment,
+        methodPayment,
+        deliver: 'none',
+        addressReceive,
+        timeOrder: new Date(),
+        phoneContact,
+      }, {
+        transaction: trx
+      });
+      const newArr = items.map((itemValue) => {
+        return {
+          orderId: newOrder,
+          itemId: itemValue.idItem,
+          quantity: itemValue.quantity,
+          price: itemValue.price,
+        }
+      });
+      await db.OrderItem.bulkCreate(newArr, {
+        transaction: trx
+      });
+      await trx.commit();
+      return res.status(200).send(RESPONSE('Đặt đơn thành công', 0));
+    } catch (error) {
+      await trx.rollback();
+      return res.status(200).send(RESPONSE('có lỗi xảy ra', -1));
+    }
     // items: [
     //   {
     //     idItem: 1,
     //     quantity: 4,
+    //     price: 100000 // đã áp mã giảm giá
     //   },
     //   {
     //     idItem: 2,
     //     quantity:1,
     //   }
     // ]
-    const { items } = req.body;
-
-
   },
   async cancelItems(req, res) {
     const { idOrder } = req.params;
@@ -505,9 +536,6 @@ const userController = {
             }
           ]
         },
-        {
-
-        }
       ],
     }
     const total = await db.Order.count({
@@ -677,6 +705,96 @@ const userController = {
     });
     return res.status(200).send(RESPONSE('Update thông báo thành công', 0));
   },
+  async paymentByPaypal(req, res) {
+    const {items, idOrder} = req.body;
+    let totalAmount = 0;
+    const fixItem = items.map((value) => {
+      totalAmount += (value.price * value.quantity);
+      return {
+        name: value.name,
+        sku: value.id,
+        price: value.price,
+        currency: 'USD',
+        quantity: value.quantity
+      }
+    });
+    const host = req.headers.host.includes('http') ? req.headers.host : `http://${req.headers.host}`;
+    const origin = req.headers.origin.include('http') ? req.headers.origin : `https://${req.headers.origin}`;
+    const payment_json = {
+      intent: 'sale',
+      payer: {
+        'payment_method': 'paypal'
+      },
+      'redirect_urls': {
+        'return_url': `${origin}/user/payment/success?&idOrder=${idOrder}`,
+        'cancel_url': `${origin}/user/payment/cancel`,
+      },
+      transactions: [
+        {
+          'item_list': {
+            items: fixItem
+          },
+          amount: {
+            currency: 'USD',
+            total: totalAmount,
+          },
+          description: `Mã đơn hàng ${idOrder}`
+        }
+      ]
+    };
+    paypal.payment.create(payment_json, async (err, payment) => {
+      if (err) {
+        return res.status(200).send(RESPONSE('có lỗi xảy ra', -1, err));
+      }
+      for(let i = 0; i < payment.links.length; i++) {
+        if (payment.links[i].rel === 'approval_url') {
+          if(payment.links[i].href.includes('payment/success')) {
+            await db.Order.update({
+              isPayment: true,
+            }, {
+              where: {
+                id: idOrder
+              }
+            });
+          }
+          return res.redirect(`${payment.links[i].href}`);
+        }
+      }
+    })
+  },
+  async paymentSuccess(req, res) {
+    console.log(req.headers['x-forwarded-proto']);
+    const {paymentId, PayerID: payerId,idOrder } = req.query;
+    await db.Order.update({
+      isPayment: true,
+    }, {
+      where: {
+        id: idOrder
+      }
+    });
+    console.log(idOrder);
+    return res.status(200).send(RESPONSE(`Thanh toán đơn hàng thành công`, 0, {
+      paymentId,
+      payerId,
+      idOrder,
+    }))
+  },
+  async paymentCancel(req, res) {
+    return res.status(200).send(RESPONSE('Giao dịch bị hủy', 0));
+  },
+  async checkSuccess(req, res) {
+    const {idOrder} = req.query;
+    const checkOrder = await db.Order.findOne({
+      where: {
+        userId: req.userId,
+        id: idOrder,
+      }
+    });
+    if (checkOrder.isPayment) {
+      return res.status(200).send(RESPONSE('Đơn hàng đã được xác nhận thanh toán', 0));
+    }
+    return res.status(200),send(RESPONSE('Đơn hàng chưa thanh toán', -1));
+  }
 };
 
 module.exports = userController;

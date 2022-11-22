@@ -3,12 +3,12 @@ const path = require('path');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+
 require('dotenv').config();
 const connectDB = require('./config/connectDB');
 const initWebRouter = require('./routes/index');
 
 const app = express();
-
 app.use(bodyParser());
 app.use(cors({
   origin: [

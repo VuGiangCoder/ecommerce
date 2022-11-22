@@ -4,14 +4,8 @@ const db = require('../models');
 const token = require('../service/token');
 
 const middleware = {
-  async refreshToken(req, res, next) {
-
-    next();
-  },
-
   async verifyToken(req, res, next) {
     const { token: tokenValue } = req.cookies;
-    console.log('có gọi');
     if (!token) {
       return res.status(200).send(RESPONSE('Không có token', -1));
     }
@@ -49,7 +43,6 @@ const middleware = {
       },
     );
     res.cookie('token', newToken);
-
     next();
   },
 
@@ -57,6 +50,18 @@ const middleware = {
     if (req.userPosition === 'buyer') next();
     else {
       return res.status(200).send(RESPONSE('Không phải người mua', -1));
+    }
+  },
+  verifySeller(req, res, next) {
+    if (req.userPosition === 'seller') next();
+    else {
+      return res.status(200).send(RESPONSE('Không phải người bán', -1));
+    }
+  },
+  verifyAdmin(req, res, next) {
+    if (req.userPosition === 'admin') next();
+    else {
+      return res.status(200).send(RESPONSE('Không phải quản trị viên', -1));
     }
   },
 };
