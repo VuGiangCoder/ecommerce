@@ -6,8 +6,9 @@ const middleware = require('../middleware/middleware');
 
 router.post('/regis', userController.createUser);
 router.post('/login', userController.login);
-router.get('/profile',middleware.verifyToken, userController.getInfo);
+router.get('/profile', middleware.verifyToken, userController.getInfo);
 router.get('/search_product', userController.searchProduct);
+router.get('/detail_item/:idItem', userController.getDetailItem);
 // router.get("/cart/", userController.getCart);
 // router.get("/forget_password", userController.forgetPassword);
 // router.post("/order/", userController.orderItem);

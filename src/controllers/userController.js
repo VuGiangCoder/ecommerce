@@ -111,8 +111,13 @@ const userController = {
       await checkStoreToken.save();
     }
     delete checkUser.dataValues.password;
+    console.log(newToken);
     res.cookie('token', newToken);
     return res.status(200).send(RESPONSE('Đăng nhập thành công', 0, checkUser));
+  },
+  async logout(req, res) {
+    res.clearCookie('token');
+    return res.status(200).send(RESPONSE('đăng xuất thành công', 0));
   },
   async getInfo(req, res) {
     const checkUser = await db.User.findOne({
@@ -139,7 +144,7 @@ const userController = {
     return res.status(200).send(RESPONSE('Thông tin cá nhân', 0, checkUser.dataValues));
   },
   async searchProduct(req, res) {
-    let {name, priceMin, priceMax, page, size} = req.query;
+    let { name, priceMin, priceMax, page, size } = req.query;
     const options = {};
     page = page ? parseInt(page) : parseInt(process.env.PAGE);
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
@@ -160,11 +165,11 @@ const userController = {
     }
 
     const include = [
-        {
-          model: db.ItemImage,
-          as: 'itemData',
-          attributes: ['image'],
-        },
+      {
+        model: db.ItemImage,
+        as: 'itemData',
+        attributes: ['image'],
+      },
     ];
     const totalProduct = await db.Item.count({
       where: options,
@@ -178,7 +183,7 @@ const userController = {
       limit: size,
       include
     });
-    return res.status(200).send(RESPONSE('danh sách sản phẩm',0, {
+    return res.status(200).send(RESPONSE('danh sách sản phẩm', 0, {
       totalPage: Math.ceil(totalProduct / size),
       products,
       page,
@@ -186,7 +191,7 @@ const userController = {
     }))
   },
   async changePassword(req, res) {
-    const {password, newPassword} = req.body;
+    const { password, newPassword } = req.body;
     const checkUser = await db.User.findOne({
       where: {
         email: req.userEmail,
@@ -227,14 +232,14 @@ const userController = {
       await checkTokenForget.save();
     }
 
-    sendMail(req.userEmail,'Xác nhận quên mật khẩu','',`<a href='${req.headers.origin}/confirm_passowrd?email=${req.userEmail}&code=${token}'>Tại đây</a>`);
-    return res.status(200).send(RESPONSE('Xác nhận trong email',0));
+    sendMail(req.userEmail, 'Xác nhận quên mật khẩu', '', `<a href='${req.headers.origin}/confirm_passowrd?email=${req.userEmail}&code=${token}'>Tại đây</a>`);
+    return res.status(200).send(RESPONSE('Xác nhận trong email', 0));
   },
   async confirmPassword(req, res) {
     try {
       const trx = new Transaction();
-      const {email, code} = req.query;
-      const {newPassword} = req.body;
+      const { email, code } = req.query;
+      const { newPassword } = req.body;
       const payload = token.verifyToken(code);
       if (!payload || (payload.email !== email)) {
         return res.status(200).send(RESPONSE('Thông tin không hợp lệ', 0));
@@ -247,7 +252,7 @@ const userController = {
       });
       if (!checkToken) return res.status(200).send(RESPONSE('Thông tin không hợp lệ', 0));
       const hashNewPassword = convertBcrypt.hash(newPassword);
-      await db.User.update({password: hashNewPassword}, {
+      await db.User.update({ password: hashNewPassword }, {
         where: {
           id: payload.id,
         },
@@ -263,15 +268,15 @@ const userController = {
       });
       await trx.commit();
       return res.status(200).send(RESPONSE('Khôi phục mật khẩu thành công', 0));
-      } catch (error) {
-        await trx.rollback();
-        return res.status(200).send(RESPONSE('có lỗi xảy ra', -1, error));
-      }
-    
+    } catch (error) {
+      await trx.rollback();
+      return res.status(200).send(RESPONSE('có lỗi xảy ra', -1, error));
+    }
+
   },
   async updateUser(req, res) {
     try {
-      const {fullname, phoneNumber, gender, imageAvatar, address} = req.body;
+      const { fullname, phoneNumber, gender, imageAvatar, address } = req.body;
       const trx = new Transaction();
       const checkUser = await db.User.findOne({
         where: {
@@ -285,16 +290,16 @@ const userController = {
       if (gender) checkUser.gender = gender;
       if (address) checkUser.address = address;
       if (imageAvatar) {
-        if(!image.isImage(imageAvatar)) {
+        if (!image.isImage(imageAvatar)) {
           return res.status(200).send(RESPONSE('File không hợp lệ', -1));
         }
-        if(image.readSize(imageAvatar) > 2) {
+        if (image.readSize(imageAvatar) > 2) {
           return res.status(200).send(RESPONSE('Kích thước file <= 2M', -1));
         }
         const fileName = image.saveImage(imageAvatar, 'avatar');
         checkUser.imageAvatar = fileName;
       }
-      await checkUser.save({transaction: trx});
+      await checkUser.save({ transaction: trx });
       await trx.commit();
       image.deleteImage(currentAvatar);
       return res.status(200).send(RESPONSE('Cập nhật thông tin thành công', 0, {
@@ -312,42 +317,42 @@ const userController = {
   async changeItemOnCart(req, res) {
     try {
       const trx = new Transaction();
-      const {cart} = req.cookies;
-    const checkCartUser = await db.Cart.finAll({
-      raw: true,
-      where: {
-        userId: req.userId,
-      }
-    });
-    const listIdItem = checkCartUser.map((check) => {
-      return check.itemId;
-    });
-    const arr =  cart.map((itemInCart) => {
-      if(listIdItem.includes(itemInCart.itemId)) {
-        db.Cart.update({
-          quantity: itemInCart.quantity ? itemInCart.quantity : 1,
-          updatedAt: new Date(),
-        }, {
-          where: {
-            itemId: itemInCart.itemId 
-          },
-          transaction: trx
-        })
-      } else {
-        db.Cart.create({
-          itemId: itemInCart.itemId,
-          quantity: itemInCart.quantity ? itemInCart.quantity : 1,
+      const { cart } = req.cookies;
+      const checkCartUser = await db.Cart.finAll({
+        raw: true,
+        where: {
           userId: req.userId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }, {
-          transaction: trx
-        });
-      }
-    });
-    await Promise.all(arr);
-    await trx.commit();
-    return res.status(200).send(RESPONSE('Cập nhật đơn hàng thành công', 0));
+        }
+      });
+      const listIdItem = checkCartUser.map((check) => {
+        return check.itemId;
+      });
+      const arr = cart.map((itemInCart) => {
+        if (listIdItem.includes(itemInCart.itemId)) {
+          db.Cart.update({
+            quantity: itemInCart.quantity ? itemInCart.quantity : 1,
+            updatedAt: new Date(),
+          }, {
+            where: {
+              itemId: itemInCart.itemId
+            },
+            transaction: trx
+          })
+        } else {
+          db.Cart.create({
+            itemId: itemInCart.itemId,
+            quantity: itemInCart.quantity ? itemInCart.quantity : 1,
+            userId: req.userId,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }, {
+            transaction: trx
+          });
+        }
+      });
+      await Promise.all(arr);
+      await trx.commit();
+      return res.status(200).send(RESPONSE('Cập nhật đơn hàng thành công', 0));
     } catch (error) {
       await trx.rollback();
       return res.status(200).send(RESPONSE('có lỗi xảy ra', -1));
@@ -377,12 +382,12 @@ const userController = {
     //     quantity:1,
     //   }
     // ]
-    const {items} = req.body;
+    const { items } = req.body;
 
 
   },
   async cancelItems(req, res) {
-    const {idOrder} = req.params;
+    const { idOrder } = req.params;
     const checkOrderOwn = await db.Order.findOne({
       where: {
         id: idOrder,
@@ -401,7 +406,7 @@ const userController = {
   async reviewItem(req, res) {
     try {
       const trx = new Transaction();
-      const {itemId, orderId, comment, star, images} = req.body;
+      const { itemId, orderId, comment, star, images } = req.body;
       const checkReview = await db.Order.findOne({
         nest: true,
         where: {
@@ -422,8 +427,8 @@ const userController = {
       if (!checkReview || checkReview.orderItemData.length === 0) {
         return res.status(200).send(RESPONSE('Bình luận không hợp lệ', -1));
       }
-      const options = {text: comment, itemId};
-      if(!comment) {
+      const options = { text: comment, itemId };
+      if (!comment) {
         return res.status(200).send(RESPONSE('Cần có nội dung bình luận', -1));
       }
       if (star) {
@@ -435,15 +440,15 @@ const userController = {
         itemId,
         createdAt: new Date(),
         updatedAt: new Date(),
-      },{transaction: trx});
-      if(images) {
+      }, { transaction: trx });
+      if (images) {
         images.forEach((imageItem) => {
-          if(!image.isImage(imageItem) || image.readSize(imageItem) > 2) {
+          if (!image.isImage(imageItem) || image.readSize(imageItem) > 2) {
             return res.status(200).send(RESPONSE('File ảnh không hợp lệ', -1));
           }
         });
         const storeImages = images.map((imageItem) => {
-          return image.saveImage(imageItem,'comment');
+          return image.saveImage(imageItem, 'comment');
         });
         await db.CommentImage.bulkCreate(
           storeImages.map((imageValue) => ({
@@ -451,7 +456,7 @@ const userController = {
             image: imageValue,
             createdAt: new Date(),
             updatedAt: new Date(),
-          })),{transaction: trx}
+          })), { transaction: trx }
         )
       }
       await trx.commit();
@@ -465,7 +470,7 @@ const userController = {
 
   // },
   async getHistoryOrder(req, res) {
-    let {page, size} = req.query;
+    let { page, size } = req.query;
     page = page ? parseInt(page) : parseInt(process.env.PAGE);
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
     const options = {
@@ -474,7 +479,7 @@ const userController = {
       },
       nest: true,
       include: [
-       {
+        {
           model: db.OrderItem,
           as: 'orderItemData',
           target: ['itemId', 'quantity', 'price', 'id'],
@@ -499,10 +504,10 @@ const userController = {
               ]
             }
           ]
-       },
-       {
+        },
+        {
 
-       }
+        }
       ],
     }
     const total = await db.Order.count({
@@ -522,7 +527,7 @@ const userController = {
     }))
   },
   async getListShopFavorite(req, res) {
-    let {page, size} = req.query;
+    let { page, size } = req.query;
     page = page ? parseInt(page) : parseInt(process.env.PAGE);
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
     const favorites = await db.FavoriteShop.findAll({
@@ -535,7 +540,7 @@ const userController = {
     return res.status(200).send(RESPONSE('Danh sách khách sạn yêu thích', 0, favorites))
   },
   async toggleFavoriteShop(req, res) {
-    const {idShop} = req.params;
+    const { idShop } = req.params;
     const options = {
       shopId: idShop,
       userId: req.userId,
@@ -553,7 +558,7 @@ const userController = {
     return res.status(200).send(RESPONSE('Thay đổi trạng thái yêu thích shop thành công', 0));
   },
   async getDetailOrder(req, res) {
-    const {idOrder} = req.params;
+    const { idOrder } = req.params;
     const order = await db.Order.findOne({
       nest: true,
       where: {
@@ -563,7 +568,7 @@ const userController = {
             required: false,
             model: db.OrderItem,
             as: 'orderItemData',
-            target: ['quantity','itemId'],
+            target: ['quantity', 'itemId'],
             include: [
               {
                 model: db.Item,
@@ -589,13 +594,13 @@ const userController = {
         ]
       }
     });
-    if(!order) {
+    if (!order) {
       return res.status(200).send(RESPONSE('Thông tin không tồn tại', -1));
     }
-    return res.status(200).send(RESPONSE('Chi tiết đơn hàng', 0,order));
+    return res.status(200).send(RESPONSE('Chi tiết đơn hàng', 0, order));
   },
   async getDetailItem(req, res) {
-    const {idItem} = req.params;
+    const { idItem } = req.params;
     const item = await db.Item.findOne({
       nest: true,
       where: {
@@ -615,8 +620,8 @@ const userController = {
     return res.status(200).send(RESPONSE('chi tiết sản phẩm', 0, item))
   },
   async getDetailShop(req, res) {
-    const {idShop} = req.params;
-    let {page, size} = req.query;
+    const { idShop } = req.params;
+    let { page, size } = req.query;
     page = page ? parseInt(page) : parseInt(process.env.PAGE);
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
     const options = {
@@ -662,10 +667,10 @@ const userController = {
 
   },
   async updateNotify(req, res) {
-    const {idNotify} = req.params;
+    const { idNotify } = req.params;
     await db.Notifie.update({
       status: 'read',
-    },{
+    }, {
       where: {
         id: idNotify,
       }

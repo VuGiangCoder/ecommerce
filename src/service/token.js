@@ -5,7 +5,7 @@ const token = {
     return jwt.sign(payload, process.env.JWT_SECRET);
   },
   verifyToken(valueToken) {
-    jwt.verify(valueToken, process.env.JWT_SECRET, (err, decode) => {
+    return jwt.verify(valueToken, process.env.JWT_SECRET, (err, decode) => {
       if (err) return false;
       return decode;
     });
