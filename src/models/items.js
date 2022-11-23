@@ -18,6 +18,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'itemId',
         as: 'itemImageData',
       });
+      Item.belongsTo(models.Shop, {
+        foreignKey: 'shopId',
+        as: 'shopData',
+        targetKey: 'id',
+      })
     }
   }
   Item.init(

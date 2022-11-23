@@ -1,9 +1,9 @@
 const db = require('../models/index');
-const { Op, Transaction } = require('sequelize');
+const { Op, } = require('sequelize');
+const {sequelize} = require('../config/connectDB');
 const sendMail = require('../service/sendMail');
 const RESPONSE = require('../schema/response');
 const convertBcrypt = require('../service/convertBcrypt');
-// const serviceImage = require('../service/serviceImage');
 const token = require('../service/token');
 const image = require('../service/image');
 const paypal = require('../config/paypal');
@@ -63,6 +63,9 @@ const userController = {
     const checkUser = await db.User.findOne({
       // raw: true,
       // nest: true,
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'],
+      },
       where: { email },
       include: [
         {
@@ -112,12 +115,20 @@ const userController = {
       await checkStoreToken.save();
     }
     delete checkUser.dataValues.password;
-    console.log(newToken);
+    const cart = await db.Cart.findAll({
+      where: {
+        userId: checkUser.id
+      },
+      attributes: ['itemId','quantity'],
+      raw:true,
+    });
     res.cookie('token', newToken);
+    res.cookie('cart',JSON.stringify(cart));
     return res.status(200).send(RESPONSE('Đăng nhập thành công', 0, checkUser));
   },
   async logout(req, res) {
     res.clearCookie('token');
+    res.clearCookie('cart');
     return res.status(200).send(RESPONSE('đăng xuất thành công', 0));
   },
   async getInfo(req, res) {
@@ -142,7 +153,7 @@ const userController = {
       return res.status(200).send(RESPONSE('Token không hợp lệ', -1));
     }
     delete checkUser.dataValues.password;
-    return res.status(200).send(RESPONSE('Thông tin cá nhân', 0, checkUser.dataValues));
+    return res.status(200).send(RESPONSE('Thông tin cá nhân', 0, checkUser));
   },
   async searchProduct(req, res) {
     let { name, priceMin, priceMax, page, size } = req.query;
@@ -168,13 +179,18 @@ const userController = {
     const include = [
       {
         model: db.ItemImage,
-        as: 'itemData',
-        attributes: ['image'],
+        as: 'itemImageData',
+        target: [
+          // 'id',
+          // 'image'
+          // [Sequelize.literal(
+          //   `case when id >= 1 then '${req.headers.origin}/public/${image}'`,'image'
+          // )]
+        ], // lấy ra toàn bộ
       },
     ];
     const totalProduct = await db.Item.count({
       where: options,
-      include,
       col: 'id'
     })
 
@@ -182,11 +198,26 @@ const userController = {
       where: options,
       offset: (page - 1) * size,
       limit: size,
-      include
+      include,
     });
+    const convertProducts = products.map((item) => {
+      const changeImage = (itemValue) => {
+        return itemValue.map((image) => {
+          return {
+            ...image.dataValues,
+            image: `${req.headers.host}/public/img/${image.dataValues.image}`
+          }
+        });
+      }
+      return {
+        ...item.dataValues,
+        itemImageData: changeImage(item.dataValues.itemImageData)
+      }
+    });
+    // console.log(convertProducts);
     return res.status(200).send(RESPONSE('danh sách sản phẩm', 0, {
       totalPage: Math.ceil(totalProduct / size),
-      products,
+      products:convertProducts,
       page,
       size,
     }))
@@ -237,8 +268,8 @@ const userController = {
     return res.status(200).send(RESPONSE('Xác nhận trong email', 0));
   },
   async confirmPassword(req, res) {
+    const trx = await sequelize.transaction();
     try {
-      const trx = new Transaction();
       const { email, code } = req.query;
       const { newPassword } = req.body;
       const payload = token.verifyToken(code);
@@ -276,9 +307,9 @@ const userController = {
 
   },
   async updateUser(req, res) {
+    const trx = await sequelize.transaction();
     try {
       const { fullname, phoneNumber, gender, imageAvatar, address } = req.body;
-      const trx = new Transaction();
       const checkUser = await db.User.findOne({
         where: {
           id: req.userId
@@ -315,68 +346,74 @@ const userController = {
       return res.status(200).send(RESPONSE('Có lỗi xảy ra', -1));
     }
   },
-  async changeItemOnCart(req, res) {
-    try {
-      const trx = new Transaction();
-      const { cart } = req.cookies;
-      const checkCartUser = await db.Cart.findAll({
-        raw: true,
-        where: {
-          userId: req.userId,
-        }
-      });
-      const listIdItem = checkCartUser.map((check) => {
-        return check.itemId;
-      });
-      const arr = cart.map((itemInCart) => {
-        if (listIdItem.includes(itemInCart.itemId)) {
-          db.Cart.update({
-            quantity: itemInCart.quantity ? itemInCart.quantity : 1,
-            updatedAt: new Date(),
-          }, {
-            where: {
-              itemId: itemInCart.itemId
-            },
-            transaction: trx
-          })
-        } else {
-          db.Cart.create({
-            itemId: itemInCart.itemId,
-            quantity: itemInCart.quantity ? itemInCart.quantity : 1,
-            userId: req.userId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }, {
-            transaction: trx
-          });
-        }
-      });
-      await Promise.all(arr);
-      await trx.commit();
-      return res.status(200).send(RESPONSE('Cập nhật đơn hàng thành công', 0));
-    } catch (error) {
-      await trx.rollback();
-      return res.status(200).send(RESPONSE('có lỗi xảy ra', -1));
-    }
-    /*
-      cart = [
+  async getCart(req, res) {
+    const cart = await db.Cart.findAll({
+      where: {
+        userId: req.userId
+      },
+      include: [
         {
-          idItem: 1,
-          quantity: 10,
-          id: 1,
-        },
-        {
-          idItem: 3,
-          quantity: 20,
-        },
+          model: db.Item,
+          as: 'itemData',
+          attributes: ['name','description','price']
+        }
       ]
-    */
+    });
+    return res.status(200).send(RESPONSE('giỏ hàng người dùng', 0, cart));
   },
   async orderItems(req, res) {
+    const trx = await sequelize.transaction();
     try {
-      const trx = new Transaction();
       //promotionId
+      /*
+       [
+        {
+          itemId,
+          quantity,
+        }
+       ]
+       */
       const { items, isPayment, methodPayment, addressReceive, phoneContact } = req.body;
+      const promotion = await db.PromotionItem.findAll({
+        where: {
+          itemId: {
+            [Op.in]: items.map((item)=> item.itemId)
+          }
+        },
+        include: [
+          {
+            model: db.Promotion,
+            as: 'PromotionData',
+            attributes: ['reducePercent','dayBegin','dayFinish'],
+            where: {
+              dayBegin: {
+                [Op.lte]: new Date(),
+              },
+              dayFinish: {
+                [Op.gte]: new Date(),
+              }
+            }
+          },
+          {
+            model: db.Item,
+            as: 'itemData',
+            attributes: ['price']
+          }
+        ]
+      });
+      let newItems = [];
+      items.forEach((item) => {
+        promotion.forEach((p) => {
+          if(promotion.itemId === item.itemId) {
+            newItems.push({
+              ...item,
+              price: promotion.itemData.price * 
+              (1 - promotion.PromotionData.reducePercent ? promotion.PromotionData.reducePercent : 0)
+            })
+          }
+        })
+      });
+      
       const newOrder = await db.Order.create({
         userId: req.userId,
         isPayment,
@@ -386,12 +423,12 @@ const userController = {
         timeOrder: new Date(),
         phoneContact,
       }, {
-        transaction: trx
+        transaction: trx,
       });
-      const newArr = items.map((itemValue) => {
+      const newArr = newItems.map((itemValue) => {
         return {
-          orderId: newOrder,
-          itemId: itemValue.idItem,
+          orderId: newOrder.dataValues.id,
+          itemId: itemValue.itemId,
           quantity: itemValue.quantity,
           price: itemValue.price,
         }
@@ -435,27 +472,30 @@ const userController = {
   },
   //chỉ review được sản phẩm theo đơn hàng đã mua
   async reviewItem(req, res) {
+    const trx = await sequelize.transaction();
     try {
-      const trx = new Transaction();
       const { itemId, orderId, comment, star, images } = req.body;
-      const checkReview = await db.Order.findOne({
-        nest: true,
+      const checkReview = await db.Order.findAll({
+        // nest: true,
         where: {
           userId: req.userId,
           id: orderId,
-          include: [
+          isPayment: true,
+          deliver: 'done',
+        },
+        include: [
             {
               model: db.OrderItem,
               as: 'orderItemData',
-              target: ['itemId'],
+              target: [],
+              attributes: ['itemId'],
               where: {
-                itemId
+                itemId,
               }
             }
           ]
-        }
       });
-      if (!checkReview || checkReview.orderItemData.length === 0) {
+      if (!checkReview || checkReview.orderItemData?.length === 0) {
         return res.status(200).send(RESPONSE('Bình luận không hợp lệ', -1));
       }
       const options = { text: comment, itemId };
@@ -463,8 +503,9 @@ const userController = {
         return res.status(200).send(RESPONSE('Cần có nội dung bình luận', -1));
       }
       if (star) {
-        comment.star = star;
+        options.star = star;
       }
+      
       const idComment = await db.Recomment.create({
         ...options,
         userId: req.userId,
@@ -472,6 +513,7 @@ const userController = {
         createdAt: new Date(),
         updatedAt: new Date(),
       }, { transaction: trx });
+      console.log('idcomment: ' + idComment.id);
       if (images) {
         images.forEach((imageItem) => {
           if (!image.isImage(imageItem) || image.readSize(imageItem) > 2) {
@@ -483,7 +525,7 @@ const userController = {
         });
         await db.CommentImage.bulkCreate(
           storeImages.map((imageValue) => ({
-            commentId: idComment,
+            commentId: idComment.id,
             image: imageValue,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -494,7 +536,8 @@ const userController = {
       return res.status(200).send(RESPONSE('bình luận sản phẩm thành công', 0));
     } catch (error) {
       await trx.rollback();
-      return res.stat(200).send(RESPONSE('có lỗi xảy ra', -1));
+      console.log(error);
+      return res.status(200).send(RESPONSE('có lỗi xảy ra', -1));
     }
   },
   // async changeReviewItem(req, res) {
@@ -509,38 +552,43 @@ const userController = {
         userId: req.userId
       },
       nest: true,
+      order: [
+        ['createdAt','DESC']
+      ],
       include: [
         {
           model: db.OrderItem,
           as: 'orderItemData',
-          target: ['itemId', 'quantity', 'price', 'id'],
+          attributes: ['itemId', 'quantity', 'price', 'id'],
           required: false,
           include: [
             {
               model: db.Item,
               as: 'itemData',
-              target: ['name', 'description', 'id'],
-              required: false,
+              attributes: ['name', 'description', 'id'],
+              // required: false,
+              //sr evo
               include: [
                 {
                   model: db.Shop,
                   as: 'shopData',
-                  target: ['shopName'],
+                  attributes: ['shopName','status','id'],
                 },
                 {
                   model: db.ItemImage,
                   as: 'itemImageData',
-                  target: ['image']
+                  attributes: ['image','id'],
                 }
               ]
-            }
+            },
+            
           ]
         },
       ],
     }
     const total = await db.Order.count({
       ...options,
-      col: id,
+      col: 'id',
     });
     const orders = await db.Order.findAll({
       ...options,
@@ -558,6 +606,12 @@ const userController = {
     let { page, size } = req.query;
     page = page ? parseInt(page) : parseInt(process.env.PAGE);
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
+    const total = await db.FavoriteShop.count({
+      col: 'id',
+      where: {
+        userId: req.userId,
+      }
+    });
     const favorites = await db.FavoriteShop.findAll({
       where: {
         userId: req.userId,
@@ -565,7 +619,12 @@ const userController = {
       limit: size,
       offset: (page - 1) * size,
     });
-    return res.status(200).send(RESPONSE('Danh sách khách sạn yêu thích', 0, favorites))
+    return res.status(200).send(RESPONSE('Danh sách khách sạn yêu thích', 0, {
+      favorites,
+      totalPage: Math.ceil(total / size),
+      page,
+      size
+    }))
   },
   async toggleFavoriteShop(req, res) {
     const { idShop } = req.params;
@@ -593,27 +652,26 @@ const userController = {
         id: idOrder,
         include: [
           {
-            required: false,
             model: db.OrderItem,
             as: 'orderItemData',
-            target: ['quantity', 'itemId'],
+            attributes: ['quantity', 'itemId'],
+
             include: [
               {
                 model: db.Item,
                 as: 'itemData',
-                target: ['name', 'description'],
-                required: false,
+                attributes: ['name', 'description'],
 
                 include: [
                   {
                     model: db.ItemImage,
                     as: 'itemImageData',
-                    target: ['image'],
+                    attributes: ['image'],
                   },
                   {
                     model: db.Shop,
                     as: 'shopData',
-                    target: ['shopName', 'logo']
+                    attributes: ['shopName', 'logo']
                   }
                 ]
               }
@@ -634,12 +692,20 @@ const userController = {
       where: {
         id: idItem,
       },
+      attributes: {
+        exclude: ['createdAt', 'updatedAt']
+      },
       include: [
         {
           model: db.ItemImage,
           as: 'itemImageData',
-          target: ['image'],
+          attributes: ['image', 'id'],
         },
+        {
+          model: db.Shop,
+          as: 'shopData',
+          attributes: ['shopName', 'address']
+        }
       ]
     });
     if (!item) {
@@ -653,22 +719,31 @@ const userController = {
     page = page ? parseInt(page) : parseInt(process.env.PAGE);
     size = size ? parseInt(size) : parseInt(process.env.SIZE);
     const options = {
-      nest: true,
+      // nest: true,
       where: {
         id: idShop
       },
       include: [
         {
           model: db.Item,
-          as: 'itemData',
-          target: ['name', 'price', 'description', 'id'],
-          required: false,
+          as: 'itemsData',
+          attributes: ['name', 'price', 'description', 'id'],
           include: [
             {
               model: db.ItemImage,
               as: 'itemImageData',
-              target: ['image'],
+              attributes: ['image'],
             }
+          ]
+        },
+        {
+          model: db.FavoriteShop,
+          as: 'favoriteData',
+          // where: {
+          //   shopId: idShop,
+          // },
+          attributes: [
+            'userId',
           ]
         }
       ]
@@ -692,7 +767,15 @@ const userController = {
     }))
   },
   async chat(req, res) {
-
+    const {idReader, text} = req.body;
+    await db.Chat.create({
+      readerId: idReader,
+      writerId: req.userId,
+      text,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    return res.status(200).send(RESPONSE('chat được lưu', 0));
   },
   async updateNotify(req, res) {
     const { idNotify } = req.params;

@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'shopId',
         as: 'itemsData',
       });
+      Shop.hasMany(models.FavoriteShop, {
+        foreignKey: 'shopId',
+        as: 'favoriteData',
+      })
     }
   }
   Shop.init(
@@ -48,12 +52,12 @@ module.exports = (sequelize, DataTypes) => {
         },
       },
       status: DataTypes.ENUM(['open', 'close']),
-      like: {
-        type: DataTypes.INTEGER,
-        validate: {
-          min: 0,
-        },
-      },
+      // like: {
+      //   type: DataTypes.INTEGER,
+      //   validate: {
+      //     min: 0,
+      //   },
+      // },
     },
     {
       sequelize,

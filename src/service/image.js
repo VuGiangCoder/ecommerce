@@ -1,4 +1,6 @@
 const { uuid } = require('uuidv4');
+const fs = require('fs');
+const path = require('path');
 
 const typeFile = [
   'jpeg',
@@ -32,12 +34,12 @@ const image = {
   saveImage(base64, path) {
     const buff = Buffer.from(base64.split('base64,')[1], 'base64');
     const filename = `${uuid() + Date.now()}.jpg`;
-    const foldername = `${path}/${filename}`;
-    fs.writeFileSync(`./public/img/${foldername}`, buff);
+    const foldername = `${filename}`;
+    fs.writeFileSync(`src/public/img/${path}/${foldername}`, buff);
     return foldername;
   },
   deleteImage(path) {
-    const fullPath = `./uploads/${path}`;
+    const fullPath = `src/public/img/${path}`;
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
       return true;

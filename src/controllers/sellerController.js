@@ -231,7 +231,13 @@ const sellerController = {
   },
   async getListOrder(req, res) {
     const {idShop} = req.params;
-    
+    const result = await db.OrderItem.findAll({
+      // include: [
+      //   {
+      //     model: db.
+      //   }
+      // ]
+    })
   },
   async getListComment(req, res) {
     //for item or for all

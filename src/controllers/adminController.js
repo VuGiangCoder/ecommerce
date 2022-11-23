@@ -1,7 +1,7 @@
-const { Transaction } = require('sequelize');
 const db = require('../models/index');
 const RESPONSE = require('../schema/response');
 const image = require('../service/image');
+const {sequelize} = require('../config/connectDB');
 
 const adminController = {
   async getUser(req, res) {
@@ -29,8 +29,8 @@ const adminController = {
     }))
   },
   async updateUser(req, res) {
+    const trx = await sequelize.transaction();
     try {
-      const trx = new Transaction();
       const {idUser, limitCreateShop, fullname, phoneNumber, gender, address, imageAvatar} = req.body;
       //check limitCreateShop
       const checkUser = await db.User.findOne({
@@ -146,9 +146,9 @@ const adminController = {
     return res.status(200).send(RESPONSE('Gửi thông báo thành công', 0));
   },
   async toggleStatusShop(req, res) {
+    const trx = await sequelize.transaction();
     try {
       const {idShop, status} = req.body;
-      const trx = new Transaction();
       const checkShop = await db.Shop.findOne({
         where: {
           id: idShop
