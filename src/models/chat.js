@@ -1,5 +1,5 @@
-'use strict';
-const { Model } = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 
 module.exports = (sequelize, DataTypes) => {
   class Chat extends Model {
@@ -17,18 +17,18 @@ module.exports = (sequelize, DataTypes) => {
       // });
 
       Chat.belongsTo(models.User, {
-        foreignKey: 'readerId',
-        targetKey: 'id',
-        as: 'readerData',
+        foreignKey: "readerId",
+        targetKey: "id",
+        as: "readerData",
       });
       Chat.belongsTo(models.User, {
-        foreignKey: 'writerId',
-        targetKey: 'id',
-        as: 'writerData',
+        foreignKey: "writerId",
+        targetKey: "id",
+        as: "writerData",
       });
     }
   }
-  Cart.init(
+  Chat.init(
     {
       readerId: DataTypes.INTEGER,
       writerId: DataTypes.INTEGER,
@@ -36,8 +36,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     {
       sequelize,
-      modelName: 'Chat',
-    },
+      modelName: "Chat",
+    }
   );
-  return Cart;
+  return Chat;
 };
